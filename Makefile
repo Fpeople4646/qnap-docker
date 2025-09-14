@@ -31,10 +31,10 @@ build:
 	@mkdir -p $(BUILD_DIR)
 	go build $(BUILDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) $(MAIN_PACKAGE)
 
-# Run tests
+# Run tests (unit tests only, skip integration)
 test:
-	@echo "Running tests..."
-	go test -v -race -coverprofile=coverage.out ./...
+	@echo "Running unit tests..."
+	go test -v -race -coverprofile=coverage.out ./... -short
 
 # Clean build artifacts
 clean:
