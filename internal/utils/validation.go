@@ -209,17 +209,32 @@ func ValidateQNAPPath(path string) error {
 		return fmt.Errorf("path must be absolute: %s", path)
 	}
 
-	// Check if it's under a valid QNAP CACHEDEV volume
-	if strings.HasPrefix(path, "/share/CACHEDEV") && strings.Contains(path, "_DATA/") {
-		return nil
+	// Check if it's under a valid QNAP CACHEDEV volume (with proper regex pattern)
+	// Valid patterns: /share/CACHEDEV1_DATA, /share/CACHEDEV1_DATA/, /share/CACHEDEV1_DATA/subdir
+	if strings.HasPrefix(path, "/share/CACHEDEV") && strings.Contains(path, "_DATA") {
+		// Extract the CACHEDEV part and validate it
+		pathAfterShare := strings.TrimPrefix(path, "/share/CACHEDEV")
+		if len(pathAfterShare) >= 6 { // minimum: "1_DATA"
+			// Check if it's a valid CACHEDEV format (number + _DATA)
+			parts := strings.SplitN(pathAfterShare, "_DATA", 2)
+			if len(parts) == 2 {
+				// Validate the number part
+				for _, c := range parts[0] {
+					if c < '0' || c > '9' {
+						return fmt.Errorf("path must be under a valid QNAP volume (/share/CACHEDEV*_DATA/, /share/USB/, etc.): %s", path)
+					}
+				}
+				// Validate the suffix (should be empty, "/", or "/subdir")
+				suffix := parts[1]
+				if suffix == "" || suffix == "/" || strings.HasPrefix(suffix, "/") {
+					return nil
+				}
+			}
+		}
 	}
 
 	// Check other common QNAP volume patterns
 	validPrefixes := []string{
-		"/share/CACHEDEV1_DATA/",
-		"/share/CACHEDEV2_DATA/",
-		"/share/CACHEDEV3_DATA/",
-		"/share/CACHEDEV4_DATA/",
 		"/share/USB/",
 		"/share/external/",
 	}
