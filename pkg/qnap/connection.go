@@ -15,9 +15,10 @@ import (
 
 // Connection represents a connection to a QNAP NAS
 type Connection struct {
-	config    *config.Config
-	sshClient *ssh.Client
-	dockerAPI *client.Client
+	config     *config.Config
+	sshClient  *ssh.Client
+	dockerAPI  *client.Client
+	dockerPath string // cached Docker binary path
 }
 
 // NewConnection creates a new connection with the given configuration
@@ -134,8 +135,17 @@ func (c *Connection) ExecuteCommand(cmd string) (string, error) {
 
 // ExecuteDockerCommand executes a Docker command with full path
 func (c *Connection) ExecuteDockerCommand(args []string) (string, error) {
-	// Always use full path to Docker binary
-	cmd := DockerBinary + " " + strings.Join(args, " ")
+	// Use cached Docker path or find it
+	if c.dockerPath == "" {
+		dockerPath, err := c.findDockerBinary()
+		if err != nil {
+			return "", fmt.Errorf("docker binary not found: %w", err)
+		}
+		c.dockerPath = dockerPath // cache for future use
+	}
+
+	// Execute command with found binary path
+	cmd := c.dockerPath + " " + strings.Join(args, " ")
 	return c.ExecuteCommand(cmd)
 }
 
@@ -167,17 +177,39 @@ func (c *Connection) TestConnection() error {
 
 // testContainerStation verifies that Container Station is installed and accessible
 func (c *Connection) testContainerStation() error {
-	// Check if Container Station binary exists
-	if _, err := c.ExecuteCommand(fmt.Sprintf("test -f %s", DockerBinary)); err != nil {
-		return fmt.Errorf("container Station not found at %s. Please install Container Station", DockerBinary)
+	// Try to find Docker binary if default path doesn't work
+	dockerPath, err := c.findDockerBinary()
+	if err != nil {
+		return fmt.Errorf("container Station not found: %w", err)
 	}
 
 	// Check if binary is executable
-	if _, err := c.ExecuteCommand(fmt.Sprintf("test -x %s", DockerBinary)); err != nil {
-		return fmt.Errorf("docker binary at %s is not executable", DockerBinary)
+	if _, err := c.ExecuteCommand(fmt.Sprintf("test -x %s", dockerPath)); err != nil {
+		return fmt.Errorf("docker binary at %s is not executable", dockerPath)
 	}
 
 	return nil
+}
+
+// findDockerBinary attempts to locate the Docker binary on the QNAP system
+func (c *Connection) findDockerBinary() (string, error) {
+	// Try default path first
+	if _, err := c.ExecuteCommand(fmt.Sprintf("test -f %s", DockerBinary)); err == nil {
+		return DockerBinary, nil
+	}
+
+	// Search for Container Station Docker binary
+	output, err := c.ExecuteCommand("find /share -name docker -type f 2>/dev/null | grep container-station | head -1")
+	if err != nil {
+		return "", fmt.Errorf("failed to search for docker binary: %w", err)
+	}
+
+	dockerPath := strings.TrimSpace(output)
+	if dockerPath == "" {
+		return "", fmt.Errorf("no Container Station docker binary found")
+	}
+
+	return dockerPath, nil
 }
 
 // StreamCommand executes a command and streams output to writers
@@ -208,16 +240,16 @@ func (c *Connection) StreamCommand(cmd string, stdout, stderr io.Writer) error {
 	return nil
 }
 
-// DetectAvailableVolumes detects available CACHEDEV volumes on the QNAP NAS
+// DetectAvailableVolumes detects available CACHEDEV and ZFS volumes on the QNAP NAS
 func (c *Connection) DetectAvailableVolumes() ([]string, error) {
-	// List all CACHEDEV directories
-	output, err := c.ExecuteCommand("ls -d /share/CACHEDEV*_DATA 2>/dev/null || true")
+	// List all CACHEDEV and ZFS directories
+	output, err := c.ExecuteCommand("ls -d /share/CACHEDEV*_DATA /share/ZFS*_DATA 2>/dev/null || true")
 	if err != nil {
 		return nil, fmt.Errorf("failed to detect volumes: %w", err)
 	}
 
 	if strings.TrimSpace(output) == "" {
-		return nil, fmt.Errorf("no CACHEDEV volumes found")
+		return nil, fmt.Errorf("no CACHEDEV or ZFS volumes found")
 	}
 
 	volumes := strings.Fields(output)

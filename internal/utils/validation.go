@@ -209,25 +209,38 @@ func ValidateQNAPPath(path string) error {
 		return fmt.Errorf("path must be absolute: %s", path)
 	}
 
-	// Check if it's under a valid QNAP CACHEDEV volume (with proper regex pattern)
-	// Valid patterns: /share/CACHEDEV1_DATA, /share/CACHEDEV1_DATA/, /share/CACHEDEV1_DATA/subdir
-	if strings.HasPrefix(path, "/share/CACHEDEV") && strings.Contains(path, "_DATA") {
-		// Extract the CACHEDEV part and validate it
-		pathAfterShare := strings.TrimPrefix(path, "/share/CACHEDEV")
-		if len(pathAfterShare) >= 6 { // minimum: "1_DATA"
-			// Check if it's a valid CACHEDEV format (number + _DATA)
+	// Check if it's under a valid QNAP CACHEDEV or ZFS volume (with proper regex pattern)
+	// Valid patterns: /share/CACHEDEV1_DATA, /share/ZFS530_DATA, /share/CACHEDEV1_DATA/, /share/ZFS530_DATA/subdir
+	if (strings.HasPrefix(path, "/share/CACHEDEV") || strings.HasPrefix(path, "/share/ZFS")) && strings.Contains(path, "_DATA") {
+		var pathAfterShare string
+
+		if strings.HasPrefix(path, "/share/CACHEDEV") {
+			pathAfterShare = strings.TrimPrefix(path, "/share/CACHEDEV")
+		} else if strings.HasPrefix(path, "/share/ZFS") {
+			pathAfterShare = strings.TrimPrefix(path, "/share/ZFS")
+		}
+
+		if len(pathAfterShare) >= 6 { // minimum: "1_DATA" or "530_DATA"
+			// Check if it's a valid format (number + _DATA)
 			parts := strings.SplitN(pathAfterShare, "_DATA", 2)
 			if len(parts) == 2 {
-				// Validate the number part
-				for _, c := range parts[0] {
-					if c < '0' || c > '9' {
-						return fmt.Errorf("path must be under a valid QNAP volume (/share/CACHEDEV*_DATA/, /share/USB/, etc.): %s", path)
+				// Validate the number part (allow any digits)
+				numberPart := parts[0]
+				if numberPart != "" {
+					validNumber := true
+					for _, c := range numberPart {
+						if c < '0' || c > '9' {
+							validNumber = false
+							break
+						}
 					}
-				}
-				// Validate the suffix (should be empty, "/", or "/subdir")
-				suffix := parts[1]
-				if suffix == "" || suffix == "/" || strings.HasPrefix(suffix, "/") {
-					return nil
+					if validNumber {
+						// Validate the suffix (should be empty, "/", or "/subdir")
+						suffix := parts[1]
+						if suffix == "" || suffix == "/" || strings.HasPrefix(suffix, "/") {
+							return nil
+						}
+					}
 				}
 			}
 		}

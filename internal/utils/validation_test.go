@@ -237,6 +237,8 @@ func TestValidateQNAPPath(t *testing.T) {
 		{"/share/CACHEDEV1_DATA/docker", false},
 		{"/share/CACHEDEV2_DATA/data", false},
 		{"/share/CACHEDEV3_DATA/backup", false},
+		{"/share/ZFS530_DATA/docker", false},         // ZFS volume support
+		{"/share/ZFS1_DATA/data", false},             // ZFS volume support
 		{"/share/USB/backup", false},
 		{"/share/external/storage", false},
 		{"", true},
@@ -247,9 +249,14 @@ func TestValidateQNAPPath(t *testing.T) {
 		{"/volume1/docker", true},               // Synology path not allowed
 		{"/share/CACHEDEV1_DATA", false},        // base volume path is OK
 		{"/share/CACHEDEV1_DATA/", false},       // with trailing slash is OK
+		{"/share/ZFS530_DATA", false},           // ZFS base volume path is OK
+		{"/share/ZFS530_DATA/", false},          // ZFS with trailing slash is OK
 		{"/share/CACHEDEV10_DATA/app", false},   // double digit CACHEDEV
+		{"/share/ZFS999_DATA/app", false},       // triple digit ZFS
 		{"/share/CACHEDEVX_DATA/invalid", true}, // invalid CACHEDEV format
+		{"/share/ZFSX_DATA/invalid", true},      // invalid ZFS format
 		{"/share/CACHEDEV1_INVALID/path", true}, // invalid suffix
+		{"/share/ZFS530_INVALID/path", true},    // invalid ZFS suffix
 	}
 
 	for _, tt := range tests {

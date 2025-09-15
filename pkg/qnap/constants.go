@@ -1,13 +1,13 @@
 package qnap
 
 const (
-	// DockerBinary is the full path to the Docker binary in Container Station
+	// DockerBinary is the default path to the Docker binary in Container Station (will be auto-detected)
 	DockerBinary = "/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker"
-	// DockerCompose is the full path to the Docker Compose binary
+	// DockerCompose is the default path to the Docker Compose binary
 	DockerCompose = "/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker-compose"
-	// ContainerStationBinPath is the Container Station binary directory
+	// ContainerStationBinPath is the default Container Station binary directory
 	ContainerStationBinPath = "/share/CACHEDEV1_DATA/.qpkg/container-station/bin"
-	// ContainerStationSbinPath is the Container Station sbin directory
+	// ContainerStationSbinPath is the default Container Station sbin directory
 	ContainerStationSbinPath = "/share/CACHEDEV1_DATA/.qpkg/container-station/sbin"
 	// SocketPath is the path to the Docker socket
 	SocketPath = "/var/run/docker.sock"
