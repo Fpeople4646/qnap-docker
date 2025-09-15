@@ -5,7 +5,11 @@
 [![Release](https://img.shields.io/github/v/release/scttfrdmn/qnap-docker)](https://github.com/scttfrdmn/qnap-docker/releases/latest)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 
-**qnap-docker** is a comprehensive Docker management CLI tool for QNAP NAS devices with Container Station. It provides the full Docker workflow - from image management to container lifecycle to system maintenance - all optimized for QNAP Container Station.
+> **🚀 Comprehensive Docker Management CLI for QNAP NAS with Container Station**
+
+**qnap-docker** is a powerful, professional Docker management CLI tool designed specifically for QNAP NAS devices with Container Station. It provides the complete Docker workflow - from deployment to monitoring to maintenance - all optimized for QNAP's Container Station architecture.
+
+**✨ Key Benefits:** One-command deployment • Dynamic Container Station detection • Multi-volume support (CACHEDEV/ZFS) • Real-time monitoring • Professional Docker management
 
 Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Synology NAS systems.
 
