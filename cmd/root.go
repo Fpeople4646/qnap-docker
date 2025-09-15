@@ -21,7 +21,6 @@ var rootCmd = &cobra.Command{
 	Long: `qnap-docker is a CLI tool that simplifies Docker container deployment
 to QNAP NAS devices with Container Station. It handles SSH connection management,
 Docker client setup, and path resolution issues specific to QNAP Container Station.`,
-	Version: getVersion(),
 }
 
 func getVersion() string {
@@ -33,6 +32,8 @@ func getVersion() string {
 
 // Execute runs the root command
 func Execute() error {
+	// Set version after variables are initialized
+	rootCmd.Version = getVersion()
 	return rootCmd.Execute()
 }
 
