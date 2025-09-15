@@ -6,15 +6,13 @@
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 [![Integration Tests](https://img.shields.io/badge/integration%20tests-passing-brightgreen.svg)](#integration-tests)
 
-> **🚀 Comprehensive Docker Management CLI for QNAP NAS with Container Station**
+## 🚀 Comprehensive Docker Management CLI for QNAP NAS with Container Station
 
-**qnap-docker** is a powerful, professional Docker management CLI tool designed specifically for QNAP NAS devices with Container Station. It provides the complete Docker workflow - from deployment to monitoring to maintenance - all optimized for QNAP's Container Station architecture.
-
-**✨ Key Benefits:** One-command deployment • Dynamic Container Station detection • Multi-volume support (CACHEDEV/ZFS) • Real-time monitoring • **90%+ integration tested**
+**qnap-docker** is the complete Docker management solution for QNAP NAS devices with Container Station. Deploy, manage, and monitor Docker containers on your QNAP NAS with 40+ commands covering the full Docker workflow - container lifecycle, networking, volumes, images, and system operations. Perfect for home labs, self-hosting, and production deployments on QNAP NAS.
 
 **✅ Verified Working** on real QNAP hardware with comprehensive integration testing.
 
-Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Synology NAS systems.
+> **Sister Project**: [syno-docker](https://github.com/scttfrdmn/syno-docker) - Comprehensive Docker management for Synology NAS with Container Manager
 
 ## Features
 
@@ -48,15 +46,23 @@ Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Sy
 
 ### Installation
 
+**Multiple installation methods for macOS, Linux, and direct download:**
+
 ```bash
-# Install via Homebrew (recommended)
+# Install via Homebrew (macOS/Linux) - Recommended
 brew tap scttfrdmn/qnap-docker
 brew install qnap-docker
 
-# Or download binary from releases
+# Or in one command:
+brew install scttfrdmn/qnap-docker/qnap-docker
+
+# Direct binary download (all platforms)
 curl -L https://github.com/scttfrdmn/qnap-docker/releases/latest/download/qnap-docker-$(uname -s)-$(uname -m) -o qnap-docker
 chmod +x qnap-docker
 sudo mv qnap-docker /usr/local/bin/
+
+# Linux packages (Ubuntu/Debian/CentOS/Alpine)
+# Download .deb/.rpm/.apk from releases page
 ```
 
 ### Setup
