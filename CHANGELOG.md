@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2025-01-15
+
+### Added
+- **Development Roadmap**: Comprehensive ROADMAP.md outlining future development phases
+- **Documentation Polish**: Accurate command count (21 main + 18 subcommands)
+- **Community Guidelines**: Enhanced support section with roadmap reference
+
+### Fixed
+- **Command Count Accuracy**: Updated documentation to reflect correct 21 main commands + 18 subcommands
+- **Support References**: Removed non-existent email support, focus on GitHub issues/discussions
+
+### Improved
+- **Project Planning**: Clear roadmap through v1.0.0 with timeline and priorities
+- **Community Engagement**: Better guidance for feature requests and contributions
+
 ## [0.2.0] - 2025-01-15
 
 ### Added - Complete Docker Management Suite
@@ -27,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **System Maintenance**: Comprehensive cleanup and disk usage monitoring
 
 ### Total Command Count
-- **23 main commands + 18 subcommands** = Complete Docker workflow coverage
+- **21 main commands + 18 subcommands** = Complete Docker workflow coverage
 - Full feature parity with syno-docker v0.2.0
 - All commands adapted for QNAP Container Station architecture
 

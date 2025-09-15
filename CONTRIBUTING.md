@@ -14,7 +14,7 @@ Thank you for your interest in contributing to qnap-docker! This document provid
 
 ## Code of Conduct
 
-By participating in this project, you are expected to uphold our Code of Conduct. Please report unacceptable behavior to [support@qnap-docker.com].
+By participating in this project, you are expected to uphold our Code of Conduct. Please report unacceptable behavior through GitHub issues.
 
 ## Getting Started
 
