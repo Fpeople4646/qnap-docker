@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.2] - 2025-01-15
+## [0.2.2] - 2025-09-14
 
 ### Added - Comprehensive Integration Testing
 - **Complete Integration Test Suite**: Validates all 40+ commands on real QNAP hardware
@@ -36,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Enhanced Error Handling**: Better error messages and debugging information
 - **Test Framework**: Structured test organization matching syno-docker patterns
 
-## [0.2.1] - 2025-01-15
+## [0.2.1] - 2025-09-14
 
 ### Added
 - **Development Roadmap**: Comprehensive ROADMAP.md outlining future development phases
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Project Planning**: Clear roadmap through v1.0.0 with timeline and priorities
 - **Community Engagement**: Better guidance for feature requests and contributions
 
-## [0.2.0] - 2025-01-15
+## [0.2.0] - 2025-09-14
 
 ### Added - Complete Docker Management Suite
 - **Container Operations**: `logs`, `exec`, `start`, `stop`, `restart`, `stats` commands
@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration tests properly configurable (QNAP_HOST, QNAP_USER)
 - Path validation supports both CACHEDEV and ZFS volume patterns
 
-## [0.1.0] - 2025-01-15
+## [0.1.0] - 2025-09-14
 
 ### Added
 - Initial release of qnap-docker CLI tool
