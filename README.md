@@ -28,7 +28,7 @@ Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Sy
 
 ```bash
 # Install via Homebrew (recommended)
-brew tap scttfrdmn/homebrew-qnap-docker
+brew tap scttfrdmn/qnap-docker
 brew install qnap-docker
 
 # Or download binary from releases
