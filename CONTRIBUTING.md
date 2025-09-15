@@ -190,6 +190,7 @@ Releases are handled by maintainers:
 - 📖 [Documentation](docs/)
 - 🐛 [Issue Tracker](https://github.com/scttfrdmn/qnap-docker/issues)
 - 💬 [Discussions](https://github.com/scttfrdmn/qnap-docker/discussions)
+- ☕ [Support Development](https://ko-fi.com/scttfrdmn)
 
 ## Recognition
 

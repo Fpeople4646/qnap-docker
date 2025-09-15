@@ -575,6 +575,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🗺️ [Development Roadmap](ROADMAP.md)
 - 🐛 [Issue Tracker](https://github.com/scttfrdmn/qnap-docker/issues)
 - 💬 [Discussions](https://github.com/scttfrdmn/qnap-docker/discussions)
+- ☕ [Donate](https://ko-fi.com/scttfrdmn) - Support development
 
 ---
 
