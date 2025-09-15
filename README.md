@@ -248,9 +248,105 @@ qnap-docker ps
 qnap-docker ps --all
 ```
 
+### `qnap-docker logs <container>`
+
+View container logs with advanced options.
+
+```bash
+# Show recent logs
+qnap-docker logs web-server
+
+# Follow logs in real-time
+qnap-docker logs web-server --follow --timestamps
+
+# Show last 50 lines since 1 hour ago
+qnap-docker logs web-server --tail 50 --since 1h
+```
+
+### `qnap-docker exec <container> <command>`
+
+Execute commands inside running containers.
+
+```bash
+# Interactive shell
+qnap-docker exec -it web-server /bin/bash
+
+# Run single command
+qnap-docker exec web-server cat /etc/hostname
+
+# Run as specific user
+qnap-docker exec --user 1000:1000 web-server whoami
+```
+
+### `qnap-docker stats [containers...]`
+
+Display live container resource usage.
+
+```bash
+# Show stats for all running containers
+qnap-docker stats
+
+# Show stats for specific containers
+qnap-docker stats web-server database
+
+# One-time stats (no streaming)
+qnap-docker stats --no-stream --all
+```
+
+### `qnap-docker volume <subcommand>`
+
+Manage Docker volumes.
+
+```bash
+# List volumes
+qnap-docker volume ls
+
+# Create volume with custom driver
+qnap-docker volume create my-data --driver local --label env=prod
+
+# Inspect volume details
+qnap-docker volume inspect my-data
+
+# Clean unused volumes
+qnap-docker volume prune --force
+```
+
+### `qnap-docker network <subcommand>`
+
+Manage Docker networks.
+
+```bash
+# List networks
+qnap-docker network ls
+
+# Create custom network
+qnap-docker network create app-net --driver bridge --subnet 172.20.0.0/16
+
+# Connect container to network
+qnap-docker network connect app-net web-server --alias web
+
+# Remove unused networks
+qnap-docker network prune --force
+```
+
+### `qnap-docker system <subcommand>`
+
+System-wide Docker management.
+
+```bash
+# Show disk usage
+qnap-docker system df --verbose
+
+# Display system information
+qnap-docker system info
+
+# Clean unused data (containers, images, networks)
+qnap-docker system prune --all --volumes --force
+```
+
 ### `qnap-docker rm <container>`
 
-Remove container.
+Remove containers.
 
 ```bash
 # Remove stopped container
@@ -258,6 +354,9 @@ qnap-docker rm web-server
 
 # Force remove running container
 qnap-docker rm web-server --force
+
+# Remove multiple containers
+qnap-docker rm web-server database cache-server
 ```
 
 ## Configuration
