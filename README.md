@@ -2,7 +2,7 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/scttfrdmn/qnap-docker)](https://goreportcard.com/report/github.com/scttfrdmn/qnap-docker)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Release](https://img.shields.io/badge/release-v0.1.0-blue.svg)](https://github.com/scttfrdmn/qnap-docker/releases/tag/v0.1.0)
+[![Release](https://img.shields.io/github/v/release/scttfrdmn/qnap-docker)](https://github.com/scttfrdmn/qnap-docker/releases/latest)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 
 **qnap-docker** is a CLI tool that simplifies Docker container deployment to QNAP NAS devices with Container Station. It handles SSH connection management, Docker client setup, and path resolution issues specific to QNAP Container Station.
@@ -16,8 +16,8 @@ Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Sy
 - 👤 **Administrator user support** - Compatible with both `admin` and custom admin users
 - 📦 **docker-compose support** - Deploy complex multi-container applications
 - 🎯 **Container Station optimized** - Built specifically for QNAP Container Station
-- 🔧 **PATH resolution** - Automatically handles Docker binary location issues
-- 📂 **CACHEDEV path helpers** - Smart handling of QNAP CACHEDEV volume paths
+- 🔧 **Dynamic Docker detection** - Automatically finds Container Station across volumes
+- 📂 **Multi-volume support** - Smart handling of CACHEDEV, ZFS, USB, external volumes
 - 🔄 **Container lifecycle** - Deploy, list, and remove containers easily
 - ⚡ **Single binary** - No dependencies, just download and use
 - 🧪 **Integration tested** - Verified on real QNAP hardware
@@ -174,13 +174,18 @@ defaults:
 
 ## Volume Path Handling
 
-qnap-docker automatically handles QNAP CACHEDEV volume paths:
+qnap-docker automatically handles QNAP volume paths across different storage types:
 
 ```bash
-# These are equivalent:
-qnap-docker run nginx -v /share/CACHEDEV1_DATA/web:/usr/share/nginx/html
-qnap-docker run nginx -v ./web:/usr/share/nginx/html  # Expands to /share/CACHEDEV1_DATA/docker/web
-qnap-docker run nginx -v web:/usr/share/nginx/html    # Expands to /share/CACHEDEV1_DATA/docker/web
+# These are equivalent (auto-detects your primary volume):
+qnap-docker run nginx -v /share/ZFS530_DATA/web:/usr/share/nginx/html
+qnap-docker run nginx -v ./web:/usr/share/nginx/html  # Expands to detected volume + /docker/web
+qnap-docker run nginx -v web:/usr/share/nginx/html    # Expands to detected volume + /docker/web
+
+# Supports multiple volume types:
+qnap-docker run app -v /share/CACHEDEV1_DATA/data:/app/data  # Traditional CACHEDEV
+qnap-docker run app -v /share/ZFS530_DATA/data:/app/data     # ZFS storage pools
+qnap-docker run app -v /share/USB/backup:/app/backup        # USB storage
 ```
 
 ## Requirements
@@ -212,14 +217,19 @@ ssh admin@192.168.1.100 'test -x /share/CACHEDEV1_DATA/.qpkg/container-station/b
 
 This means:
 - Container Station is not installed
-- Container Station binary is not in the expected location
-- Your CACHEDEV path differs (try different CACHEDEV numbers)
+- Container Station binary is not accessible
+- Your volumes are not mounted (check `/share/` directory)
+
+qnap-docker uses **dynamic detection** to find Container Station automatically.
 
 ### Permission Denied
 
 ```bash
+# Check if Container Station is accessible
+ssh admin@192.168.1.100 'find /share -name docker -type f | grep container-station'
+
 # Ensure your user has access to Container Station
-ssh admin@192.168.1.100 'ls -la /share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker'
+ssh admin@192.168.1.100 'ls -la /share/*/.*qpkg/container-station/*/docker'
 ```
 
 ### Port Already in Use
@@ -229,12 +239,19 @@ ssh admin@192.168.1.100 'ls -la /share/CACHEDEV1_DATA/.qpkg/container-station/bi
 ssh admin@192.168.1.100 'netstat -tlnp | grep :8080'
 ```
 
-### Multiple CACHEDEV Volumes
+### Multiple Volumes
 
-If you have multiple volumes, specify the correct one during init:
+qnap-docker automatically detects all available volumes. You can specify a specific one during init:
 
 ```bash
+# Use specific CACHEDEV volume
 qnap-docker init your-nas.local --volume-path /share/CACHEDEV2_DATA/docker
+
+# Use ZFS volume
+qnap-docker init your-nas.local --volume-path /share/ZFS530_DATA/docker
+
+# Use USB storage
+qnap-docker init your-nas.local --volume-path /share/USB/docker
 ```
 
 ## Development
@@ -302,11 +319,12 @@ qnap-docker maintains Go Report Card A+ grade with:
 |---------|-------------|-------------|
 | **Target Platform** | Synology DSM 7.2+ | QNAP QTS 4.5.4+ |
 | **Container Platform** | Container Manager | Container Station |
-| **Docker Binary Path** | `/usr/local/bin/docker` | `/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker` |
+| **Docker Binary Path** | `/usr/local/bin/docker` | **Dynamic detection** (CACHEDEV/ZFS volumes) |
 | **Service Management** | systemd (`pkg-ContainerManager-dockerd`) | System V / QPKG |
-| **Volume Paths** | `/volume1/`, `/volume2/` | `/share/CACHEDEV1_DATA/`, `/share/CACHEDEV2_DATA/` |
+| **Volume Paths** | `/volume1/`, `/volume2/` | `/share/CACHEDEV*_DATA/`, `/share/ZFS*_DATA/` |
 | **Multi-Container Support** | Docker only | Docker + LXD + Kata (future) |
-| **Volume Detection** | Static volume enumeration | Dynamic CACHEDEV detection |
+| **Volume Detection** | Static volume enumeration | **Dynamic multi-volume detection** |
+| **Storage Types** | Synology volumes only | CACHEDEV, ZFS, USB, external |
 
 ## Contributing
 
