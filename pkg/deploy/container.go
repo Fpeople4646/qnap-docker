@@ -2,6 +2,7 @@ package deploy
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/docker/docker/client"
@@ -194,4 +195,1063 @@ func TestDockerConnection(conn *qnap.Connection) error {
 	}
 
 	return nil
+}
+
+// ExecOptions defines options for executing commands in containers
+type ExecOptions struct {
+	Interactive bool
+	TTY         bool
+	User        string
+	WorkingDir  string
+	Env         []string
+}
+
+// GetContainerLogs retrieves container logs
+func GetContainerLogs(conn *qnap.Connection, nameOrID, tail, since string, timestamps bool) (string, error) {
+	args := []string{"logs"}
+
+	if tail != "all" && tail != "" {
+		args = append(args, "--tail", tail)
+	}
+	if since != "" {
+		args = append(args, "--since", since)
+	}
+	if timestamps {
+		args = append(args, "--timestamps")
+	}
+
+	args = append(args, nameOrID)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to get logs for container %s", nameOrID)
+	}
+
+	return output, nil
+}
+
+// FollowContainerLogs follows container logs in real-time
+func FollowContainerLogs(conn *qnap.Connection, nameOrID, tail, since string, timestamps bool, stdout, stderr io.Writer) error {
+	args := []string{"logs", "--follow"}
+
+	if tail != "all" && tail != "" {
+		args = append(args, "--tail", tail)
+	}
+	if since != "" {
+		args = append(args, "--since", since)
+	}
+	if timestamps {
+		args = append(args, "--timestamps")
+	}
+
+	args = append(args, nameOrID)
+
+	// Get Docker path from connection
+	dockerPath, err := conn.GetDockerPath()
+	if err != nil {
+		return fmt.Errorf("docker binary not found: %w", err)
+	}
+
+	cmd := strings.Join(append([]string{dockerPath}, args...), " ")
+	return conn.StreamCommand(cmd, stdout, stderr)
+}
+
+// ExecCommand executes a command in a container and returns output
+func ExecCommand(conn *qnap.Connection, nameOrID string, command []string, opts *ExecOptions) (string, error) {
+	args := []string{"exec"}
+
+	if opts.User != "" {
+		args = append(args, "--user", opts.User)
+	}
+	if opts.WorkingDir != "" {
+		args = append(args, "--workdir", opts.WorkingDir)
+	}
+	for _, env := range opts.Env {
+		args = append(args, "--env", env)
+	}
+
+	args = append(args, nameOrID)
+	args = append(args, command...)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to execute command in container %s", nameOrID)
+	}
+
+	return output, nil
+}
+
+// ExecInteractive executes an interactive command in a container
+func ExecInteractive(conn *qnap.Connection, nameOrID string, command []string, opts *ExecOptions) error {
+	args := []string{"exec"}
+
+	if opts.Interactive {
+		args = append(args, "-i")
+	}
+	if opts.TTY {
+		args = append(args, "-t")
+	}
+	if opts.User != "" {
+		args = append(args, "--user", opts.User)
+	}
+	if opts.WorkingDir != "" {
+		args = append(args, "--workdir", opts.WorkingDir)
+	}
+	for _, env := range opts.Env {
+		args = append(args, "--env", env)
+	}
+
+	args = append(args, nameOrID)
+	args = append(args, command...)
+
+	// Get Docker path from connection
+	dockerPath, err := conn.GetDockerPath()
+	if err != nil {
+		return fmt.Errorf("docker binary not found: %w", err)
+	}
+
+	cmd := strings.Join(append([]string{dockerPath}, args...), " ")
+	return conn.StreamCommand(cmd, nil, nil)
+}
+
+// RestartContainer restarts a container
+func RestartContainer(conn *qnap.Connection, nameOrID string, timeout int) error {
+	args := []string{"restart"}
+	if timeout > 0 {
+		args = append(args, "--time", fmt.Sprintf("%d", timeout))
+	}
+	args = append(args, nameOrID)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to restart container %s: %s", nameOrID, output)
+	}
+
+	return nil
+}
+
+// StartContainer starts a stopped container
+func StartContainer(conn *qnap.Connection, nameOrID string) error {
+	args := []string{"start", nameOrID}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to start container %s: %s", nameOrID, output)
+	}
+
+	return nil
+}
+
+// StopContainer stops a running container
+func StopContainer(conn *qnap.Connection, nameOrID string, timeout int) error {
+	args := []string{"stop"}
+	if timeout > 0 {
+		args = append(args, "--time", fmt.Sprintf("%d", timeout))
+	}
+	args = append(args, nameOrID)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to stop container %s: %s", nameOrID, output)
+	}
+
+	return nil
+}
+
+// StatsOptions defines options for container stats
+type StatsOptions struct {
+	All      bool
+	NoStream bool
+	Format   string
+}
+
+// ImageInfo represents Docker image information
+type ImageInfo struct {
+	Repository string
+	Tag        string
+	Digest     string
+	ID         string
+	Created    string
+	Size       string
+}
+
+// ImagesOptions defines options for listing images
+type ImagesOptions struct {
+	All      bool
+	Dangling bool
+	Digests  bool
+	Format   string
+	NoTrunc  bool
+	Quiet    bool
+}
+
+// PullOptions defines options for pulling images
+type PullOptions struct {
+	AllTags             bool
+	Platform            string
+	Quiet               bool
+	DisableContentTrust bool
+}
+
+// RmiOptions defines options for removing images
+type RmiOptions struct {
+	Force   bool
+	NoPrune bool
+}
+
+// SystemDfItem represents disk usage information
+type SystemDfItem struct {
+	Type        string
+	Total       string
+	Active      string
+	Size        string
+	Reclaimable string
+}
+
+// SystemDfOptions defines options for system df
+type SystemDfOptions struct {
+	Format  string
+	Verbose bool
+}
+
+// SystemInfoOptions defines options for system info
+type SystemInfoOptions struct {
+	Format string
+}
+
+// SystemPruneOptions defines options for system prune
+type SystemPruneOptions struct {
+	All     bool
+	Force   bool
+	Volumes bool
+	Filter  []string
+}
+
+// SystemPruneResult represents the result of system prune
+type SystemPruneResult struct {
+	ContainersDeleted int
+	ImagesDeleted     int
+	NetworksDeleted   int
+	VolumesDeleted    int
+	SpaceReclaimed    string
+}
+
+// ShowContainerStats displays container resource usage statistics
+func ShowContainerStats(conn *qnap.Connection, containers []string, opts *StatsOptions) error {
+	args := []string{"stats"}
+
+	if opts.All {
+		args = append(args, "--all")
+	}
+	if opts.NoStream {
+		args = append(args, "--no-stream")
+	}
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	}
+
+	args = append(args, containers...)
+
+	// Get Docker path from connection
+	dockerPath, err := conn.GetDockerPath()
+	if err != nil {
+		return fmt.Errorf("docker binary not found: %w", err)
+	}
+
+	cmd := strings.Join(append([]string{dockerPath}, args...), " ")
+	return conn.StreamCommand(cmd, nil, nil)
+}
+
+// ListImages lists Docker images
+func ListImages(conn *qnap.Connection, repository string, opts *ImagesOptions) ([]ImageInfo, error) {
+	args := []string{"images"}
+
+	if opts.All {
+		args = append(args, "--all")
+	}
+	if opts.Dangling {
+		args = append(args, "--filter", "dangling=true")
+	}
+	if opts.Digests {
+		args = append(args, "--digests")
+	}
+	if opts.NoTrunc {
+		args = append(args, "--no-trunc")
+	}
+
+	if opts.Digests {
+		args = append(args, "--format", "table {{.Repository}}\t{{.Tag}}\t{{.Digest}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}")
+	} else {
+		args = append(args, "--format", "table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.CreatedSince}}\t{{.Size}}")
+	}
+
+	if repository != "" {
+		args = append(args, repository)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list images")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) <= 1 {
+		return []ImageInfo{}, nil
+	}
+
+	var images []ImageInfo
+	for _, line := range lines[1:] { // Skip header
+		fields := strings.Fields(line)
+		if opts.Digests && len(fields) >= 6 {
+			image := ImageInfo{
+				Repository: fields[0],
+				Tag:        fields[1],
+				Digest:     fields[2],
+				ID:         fields[3],
+				Created:    fields[4],
+				Size:       fields[5],
+			}
+			images = append(images, image)
+		} else if !opts.Digests && len(fields) >= 5 {
+			image := ImageInfo{
+				Repository: fields[0],
+				Tag:        fields[1],
+				ID:         fields[2],
+				Created:    fields[3],
+				Size:       fields[4],
+			}
+			images = append(images, image)
+		}
+	}
+
+	return images, nil
+}
+
+// ListImageIDs lists Docker image IDs only
+func ListImageIDs(conn *qnap.Connection, repository string, opts *ImagesOptions) ([]string, error) {
+	args := []string{"images", "--quiet"}
+
+	if opts.All {
+		args = append(args, "--all")
+	}
+	if opts.Dangling {
+		args = append(args, "--filter", "dangling=true")
+	}
+	if opts.NoTrunc {
+		args = append(args, "--no-trunc")
+	}
+
+	if repository != "" {
+		args = append(args, repository)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list image IDs")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	var imageIDs []string
+	for _, line := range lines {
+		if line = strings.TrimSpace(line); line != "" {
+			imageIDs = append(imageIDs, line)
+		}
+	}
+
+	return imageIDs, nil
+}
+
+// PullImage pulls a Docker image
+func PullImage(conn *qnap.Connection, imageName string, opts *PullOptions) error {
+	args := []string{"pull"}
+
+	if opts.AllTags {
+		args = append(args, "--all-tags")
+	}
+	if opts.Platform != "" {
+		args = append(args, "--platform", opts.Platform)
+	}
+	if opts.Quiet {
+		args = append(args, "--quiet")
+	}
+	if opts.DisableContentTrust {
+		args = append(args, "--disable-content-trust")
+	}
+
+	args = append(args, imageName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to pull image %s: %s", imageName, output)
+	}
+
+	if !opts.Quiet {
+		fmt.Print(output)
+	}
+
+	return nil
+}
+
+// RemoveImage removes a Docker image
+func RemoveImage(conn *qnap.Connection, imageName string, opts *RmiOptions) error {
+	args := []string{"rmi"}
+
+	if opts.Force {
+		args = append(args, "--force")
+	}
+	if opts.NoPrune {
+		args = append(args, "--no-prune")
+	}
+
+	args = append(args, imageName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to remove image %s: %s", imageName, output)
+	}
+
+	return nil
+}
+
+// GetSystemDf gets Docker system disk usage
+func GetSystemDf(conn *qnap.Connection, opts *SystemDfOptions) ([]SystemDfItem, error) {
+	args := []string{"system", "df"}
+
+	if opts.Verbose {
+		args = append(args, "--verbose")
+	}
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	} else {
+		args = append(args, "--format", "table {{.Type}}\t{{.Total}}\t{{.Active}}\t{{.Size}}\t{{.Reclaimable}}")
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get system disk usage")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) <= 1 {
+		return []SystemDfItem{}, nil
+	}
+
+	var usage []SystemDfItem
+	for _, line := range lines[1:] { // Skip header
+		fields := strings.Fields(line)
+		if len(fields) >= 5 {
+			item := SystemDfItem{
+				Type:        fields[0],
+				Total:       fields[1],
+				Active:      fields[2],
+				Size:        fields[3],
+				Reclaimable: fields[4],
+			}
+			usage = append(usage, item)
+		}
+	}
+
+	return usage, nil
+}
+
+// GetSystemInfo gets Docker system information
+func GetSystemInfo(conn *qnap.Connection, opts *SystemInfoOptions) (string, error) {
+	args := []string{"system", "info"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get system info")
+	}
+
+	return output, nil
+}
+
+// SystemPrune removes unused Docker data
+func SystemPrune(conn *qnap.Connection, opts *SystemPruneOptions) (*SystemPruneResult, error) {
+	args := []string{"system", "prune"}
+
+	if opts.All {
+		args = append(args, "--all")
+	}
+	if opts.Force {
+		args = append(args, "--force")
+	}
+	if opts.Volumes {
+		args = append(args, "--volumes")
+	}
+	for _, filter := range opts.Filter {
+		args = append(args, "--filter", filter)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to prune system")
+	}
+
+	// Parse the output to extract numbers (simplified parsing)
+	result := &SystemPruneResult{
+		SpaceReclaimed: "unknown",
+	}
+
+	// This is a simplified implementation - in practice you'd parse the actual output
+	// to extract specific numbers for containers, images, networks, volumes deleted
+	fmt.Print(output)
+
+	return result, nil
+}
+
+// VolumeInfo represents Docker volume information
+type VolumeInfo struct {
+	Name   string
+	Driver string
+}
+
+// VolumeListOptions defines options for listing volumes
+type VolumeListOptions struct {
+	Format string
+	Quiet  bool
+}
+
+// VolumeCreateOptions defines options for creating volumes
+type VolumeCreateOptions struct {
+	Driver  string
+	Labels  []string
+	Options []string
+}
+
+// VolumeRemoveOptions defines options for removing volumes
+type VolumeRemoveOptions struct {
+	Force bool
+}
+
+// VolumeInspectOptions defines options for inspecting volumes
+type VolumeInspectOptions struct {
+	Format string
+}
+
+// VolumePruneOptions defines options for pruning volumes
+type VolumePruneOptions struct {
+	Force  bool
+	Filter []string
+}
+
+// VolumePruneResult represents the result of volume prune
+type VolumePruneResult struct {
+	VolumesDeleted int
+	SpaceReclaimed string
+}
+
+// InspectOptions defines options for inspecting objects
+type InspectOptions struct {
+	Format string
+	Size   bool
+	Type   string
+}
+
+// ExportOptions defines options for exporting containers
+type ExportOptions struct {
+	Output string
+}
+
+// ImportOptions defines options for importing images
+type ImportOptions struct {
+	Change   []string
+	Message  string
+	Platform string
+}
+
+// ListVolumes lists Docker volumes
+func ListVolumes(conn *qnap.Connection, opts *VolumeListOptions) ([]VolumeInfo, error) {
+	args := []string{"volume", "ls"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	} else {
+		args = append(args, "--format", "table {{.Driver}}\t{{.Name}}")
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list volumes")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) <= 1 {
+		return []VolumeInfo{}, nil
+	}
+
+	var volumes []VolumeInfo
+	for _, line := range lines[1:] { // Skip header
+		fields := strings.Fields(line)
+		if len(fields) >= 2 {
+			volume := VolumeInfo{
+				Driver: fields[0],
+				Name:   fields[1],
+			}
+			volumes = append(volumes, volume)
+		}
+	}
+
+	return volumes, nil
+}
+
+// ListVolumeNames lists Docker volume names only
+func ListVolumeNames(conn *qnap.Connection, opts *VolumeListOptions) ([]string, error) {
+	args := []string{"volume", "ls", "--quiet"}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list volume names")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	var volumeNames []string
+	for _, line := range lines {
+		if line = strings.TrimSpace(line); line != "" {
+			volumeNames = append(volumeNames, line)
+		}
+	}
+
+	return volumeNames, nil
+}
+
+// CreateVolume creates a Docker volume
+func CreateVolume(conn *qnap.Connection, volumeName string, opts *VolumeCreateOptions) (string, error) {
+	args := []string{"volume", "create"}
+
+	if opts.Driver != "" {
+		args = append(args, "--driver", opts.Driver)
+	}
+	for _, label := range opts.Labels {
+		args = append(args, "--label", label)
+	}
+	for _, option := range opts.Options {
+		args = append(args, "--opt", option)
+	}
+
+	if volumeName != "" {
+		args = append(args, volumeName)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to create volume: %s", output)
+	}
+
+	return strings.TrimSpace(output), nil
+}
+
+// RemoveVolume removes a Docker volume
+func RemoveVolume(conn *qnap.Connection, volumeName string, opts *VolumeRemoveOptions) error {
+	args := []string{"volume", "rm"}
+
+	if opts.Force {
+		args = append(args, "--force")
+	}
+
+	args = append(args, volumeName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to remove volume %s: %s", volumeName, output)
+	}
+
+	return nil
+}
+
+// InspectVolume inspects a Docker volume
+func InspectVolume(conn *qnap.Connection, volumeName string, opts *VolumeInspectOptions) (string, error) {
+	args := []string{"volume", "inspect"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	}
+
+	args = append(args, volumeName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to inspect volume %s", volumeName)
+	}
+
+	return output, nil
+}
+
+// PruneVolumes removes unused Docker volumes
+func PruneVolumes(conn *qnap.Connection, opts *VolumePruneOptions) (*VolumePruneResult, error) {
+	args := []string{"volume", "prune"}
+
+	if opts.Force {
+		args = append(args, "--force")
+	}
+	for _, filter := range opts.Filter {
+		args = append(args, "--filter", filter)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to prune volumes")
+	}
+
+	// Parse the output to extract numbers (simplified parsing)
+	result := &VolumePruneResult{
+		SpaceReclaimed: "unknown",
+	}
+
+	// This is a simplified implementation - in practice you'd parse the actual output
+	fmt.Print(output)
+
+	return result, nil
+}
+
+// InspectObject inspects a Docker object (container, image, volume, network)
+func InspectObject(conn *qnap.Connection, objectName string, opts *InspectOptions) (string, error) {
+	args := []string{"inspect"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	}
+	if opts.Size {
+		args = append(args, "--size")
+	}
+	if opts.Type != "" {
+		args = append(args, "--type", opts.Type)
+	}
+
+	args = append(args, objectName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to inspect object %s", objectName)
+	}
+
+	return output, nil
+}
+
+// ExportContainer exports a container's filesystem as a tar archive
+func ExportContainer(conn *qnap.Connection, containerName string, opts *ExportOptions) error {
+	args := []string{"export"}
+
+	if opts.Output != "" {
+		args = append(args, "--output", opts.Output)
+	}
+
+	args = append(args, containerName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to export container %s: %s", containerName, output)
+	}
+
+	if opts.Output == "" {
+		fmt.Print(output)
+	}
+
+	return nil
+}
+
+// ImportImage imports the contents from a tarball to create a filesystem image
+func ImportImage(conn *qnap.Connection, source, repository string, opts *ImportOptions) (string, error) {
+	args := []string{"import"}
+
+	for _, change := range opts.Change {
+		args = append(args, "--change", change)
+	}
+	if opts.Message != "" {
+		args = append(args, "--message", opts.Message)
+	}
+	if opts.Platform != "" {
+		args = append(args, "--platform", opts.Platform)
+	}
+
+	args = append(args, source)
+	if repository != "" {
+		args = append(args, repository)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to import image from %s: %s", source, output)
+	}
+
+	return strings.TrimSpace(output), nil
+}
+
+// NetworkInfo represents Docker network information
+type NetworkInfo struct {
+	ID     string
+	Name   string
+	Driver string
+	Scope  string
+}
+
+// NetworkListOptions defines options for listing networks
+type NetworkListOptions struct {
+	Format string
+	Quiet  bool
+	Filter []string
+}
+
+// NetworkCreateOptions defines options for creating networks
+type NetworkCreateOptions struct {
+	Driver     string
+	DriverOpts []string
+	Gateway    []string
+	IPRange    []string
+	IPAM       []string
+	Subnet     []string
+	Labels     []string
+	Attachable bool
+	Ingress    bool
+	Internal   bool
+	IPv6       bool
+}
+
+// NetworkInspectOptions defines options for inspecting networks
+type NetworkInspectOptions struct {
+	Format string
+}
+
+// NetworkConnectOptions defines options for connecting containers to networks
+type NetworkConnectOptions struct {
+	Alias     []string
+	IP        string
+	IPv6      string
+	LinkLocal []string
+}
+
+// NetworkDisconnectOptions defines options for disconnecting containers from networks
+type NetworkDisconnectOptions struct {
+	Force bool
+}
+
+// NetworkPruneOptions defines options for pruning networks
+type NetworkPruneOptions struct {
+	Force  bool
+	Filter []string
+}
+
+// NetworkPruneResult represents the result of network prune
+type NetworkPruneResult struct {
+	NetworksDeleted int
+	SpaceReclaimed  string
+}
+
+// ListNetworks lists Docker networks
+func ListNetworks(conn *qnap.Connection, opts *NetworkListOptions) ([]NetworkInfo, error) {
+	args := []string{"network", "ls"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	} else {
+		args = append(args, "--format", "table {{.ID}}\t{{.Name}}\t{{.Driver}}\t{{.Scope}}")
+	}
+
+	for _, filter := range opts.Filter {
+		args = append(args, "--filter", filter)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list networks")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	if len(lines) <= 1 {
+		return []NetworkInfo{}, nil
+	}
+
+	var networks []NetworkInfo
+	for _, line := range lines[1:] { // Skip header
+		fields := strings.Fields(line)
+		if len(fields) >= 4 {
+			network := NetworkInfo{
+				ID:     fields[0],
+				Name:   fields[1],
+				Driver: fields[2],
+				Scope:  fields[3],
+			}
+			networks = append(networks, network)
+		}
+	}
+
+	return networks, nil
+}
+
+// ListNetworkIDs lists Docker network IDs only
+func ListNetworkIDs(conn *qnap.Connection, opts *NetworkListOptions) ([]string, error) {
+	args := []string{"network", "ls", "--quiet"}
+
+	for _, filter := range opts.Filter {
+		args = append(args, "--filter", filter)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list network IDs")
+	}
+
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	var networkIDs []string
+	for _, line := range lines {
+		if line = strings.TrimSpace(line); line != "" {
+			networkIDs = append(networkIDs, line)
+		}
+	}
+
+	return networkIDs, nil
+}
+
+// CreateNetwork creates a Docker network
+func CreateNetwork(conn *qnap.Connection, networkName string, opts *NetworkCreateOptions) (string, error) {
+	args := []string{"network", "create"}
+
+	if opts.Driver != "" {
+		args = append(args, "--driver", opts.Driver)
+	}
+	for _, opt := range opts.DriverOpts {
+		args = append(args, "--opt", opt)
+	}
+	for _, gateway := range opts.Gateway {
+		args = append(args, "--gateway", gateway)
+	}
+	for _, ipRange := range opts.IPRange {
+		args = append(args, "--ip-range", ipRange)
+	}
+	for _, ipam := range opts.IPAM {
+		args = append(args, "--ipam-driver", ipam)
+	}
+	for _, subnet := range opts.Subnet {
+		args = append(args, "--subnet", subnet)
+	}
+	for _, label := range opts.Labels {
+		args = append(args, "--label", label)
+	}
+	if opts.Attachable {
+		args = append(args, "--attachable")
+	}
+	if opts.Ingress {
+		args = append(args, "--ingress")
+	}
+	if opts.Internal {
+		args = append(args, "--internal")
+	}
+	if opts.IPv6 {
+		args = append(args, "--ipv6")
+	}
+
+	args = append(args, networkName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to create network %s: %s", networkName, output)
+	}
+
+	return strings.TrimSpace(output), nil
+}
+
+// RemoveNetwork removes a Docker network
+func RemoveNetwork(conn *qnap.Connection, networkName string) error {
+	args := []string{"network", "rm", networkName}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to remove network %s: %s", networkName, output)
+	}
+
+	return nil
+}
+
+// InspectNetwork inspects a Docker network
+func InspectNetwork(conn *qnap.Connection, networkName string, opts *NetworkInspectOptions) (string, error) {
+	args := []string{"network", "inspect"}
+
+	if opts.Format != "" {
+		args = append(args, "--format", opts.Format)
+	}
+
+	args = append(args, networkName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to inspect network %s", networkName)
+	}
+
+	return output, nil
+}
+
+// ConnectContainerToNetwork connects a container to a network
+func ConnectContainerToNetwork(conn *qnap.Connection, networkName, containerName string, opts *NetworkConnectOptions) error {
+	args := []string{"network", "connect"}
+
+	for _, alias := range opts.Alias {
+		args = append(args, "--alias", alias)
+	}
+	if opts.IP != "" {
+		args = append(args, "--ip", opts.IP)
+	}
+	if opts.IPv6 != "" {
+		args = append(args, "--ip6", opts.IPv6)
+	}
+	for _, linkLocal := range opts.LinkLocal {
+		args = append(args, "--link-local", linkLocal)
+	}
+
+	args = append(args, networkName, containerName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to connect container %s to network %s: %s", containerName, networkName, output)
+	}
+
+	return nil
+}
+
+// DisconnectContainerFromNetwork disconnects a container from a network
+func DisconnectContainerFromNetwork(conn *qnap.Connection, networkName, containerName string, opts *NetworkDisconnectOptions) error {
+	args := []string{"network", "disconnect"}
+
+	if opts.Force {
+		args = append(args, "--force")
+	}
+
+	args = append(args, networkName, containerName)
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return errors.Wrapf(err, "failed to disconnect container %s from network %s: %s", containerName, networkName, output)
+	}
+
+	return nil
+}
+
+// PruneNetworks removes unused Docker networks
+func PruneNetworks(conn *qnap.Connection, opts *NetworkPruneOptions) (*NetworkPruneResult, error) {
+	args := []string{"network", "prune"}
+
+	if opts.Force {
+		args = append(args, "--force")
+	}
+	for _, filter := range opts.Filter {
+		args = append(args, "--filter", filter)
+	}
+
+	output, err := conn.ExecuteDockerCommand(args)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to prune networks")
+	}
+
+	// Parse the output to extract numbers (simplified parsing)
+	result := &NetworkPruneResult{
+		SpaceReclaimed: "unknown",
+	}
+
+	// This is a simplified implementation - in practice you'd parse the actual output
+	fmt.Print(output)
+
+	return result, nil
 }

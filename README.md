@@ -5,20 +5,35 @@
 [![Release](https://img.shields.io/github/v/release/scttfrdmn/qnap-docker)](https://github.com/scttfrdmn/qnap-docker/releases/latest)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
 
-**qnap-docker** is a CLI tool that simplifies Docker container deployment to QNAP NAS devices with Container Station. It handles SSH connection management, Docker client setup, and path resolution issues specific to QNAP Container Station.
+**qnap-docker** is a comprehensive Docker management CLI tool for QNAP NAS devices with Container Station. It provides the full Docker workflow - from image management to container lifecycle to system maintenance - all optimized for QNAP Container Station.
 
 Sister project to [syno-docker](https://github.com/scttfrdmn/syno-docker) for Synology NAS systems.
 
 ## Features
 
+### Core Deployment
 - 🚀 **One-command deployment** - Deploy containers as easily as `qnap-docker run nginx`
-- 🔐 **SSH key & ssh-agent support** - Works with both SSH key files and ssh-agent
-- 👤 **Administrator user support** - Compatible with both `admin` and custom admin users
-- 📦 **docker-compose support** - Deploy complex multi-container applications
-- 🎯 **Container Station optimized** - Built specifically for QNAP Container Station
+- 📦 **Docker Compose support** - Deploy complex multi-container applications
 - 🔧 **Dynamic Docker detection** - Automatically finds Container Station across volumes
 - 📂 **Multi-volume support** - Smart handling of CACHEDEV, ZFS, USB, external volumes
-- 🔄 **Container lifecycle** - Deploy, list, and remove containers easily
+
+### Container Management
+- 🔄 **Complete lifecycle** - Start, stop, restart, remove containers
+- 📋 **Container inspection** - Detailed container information and logs
+- 🖥️ **Interactive execution** - Run commands inside containers (`exec`)
+- 📊 **Resource monitoring** - Real-time container statistics
+
+### Image & System Management
+- 🏗️ **Image operations** - Pull, list, remove images with advanced filtering
+- 📦 **Volume management** - Create, list, inspect, and clean up volumes
+- 🌐 **Network management** - Create, list, inspect networks; connect/disconnect containers
+- 🧹 **System maintenance** - Disk usage, system info, and cleanup tools
+- 📤 **Import/Export** - Backup and restore containers
+
+### Infrastructure
+- 🔐 **SSH key & ssh-agent support** - Works with both SSH key files and ssh-agent
+- 👤 **Administrator user support** - Compatible with both `admin` and custom admin users
+- 🎯 **Container Station optimized** - Built specifically for QNAP Container Station
 - ⚡ **Single binary** - No dependencies, just download and use
 - 🧪 **Integration tested** - Verified on real QNAP hardware
 
@@ -69,8 +84,95 @@ qnap-docker run nginx:latest \
 # Deploy from docker-compose.yml
 qnap-docker deploy ./docker-compose.yml
 
-# List running containers
+# List running containers and monitor resources
 qnap-docker ps
+qnap-docker stats
+
+# Get container logs and execute commands
+qnap-docker logs web-server --follow
+qnap-docker exec web-server /bin/bash
+
+# Remove container when done
+qnap-docker rm web-server
+```
+
+## Commands Overview
+
+qnap-docker provides **20+ commands** covering the complete Docker workflow:
+
+### **Container Lifecycle**
+- `qnap-docker run` - Deploy single containers with full configuration options
+- `qnap-docker ps` - List containers (running/all) with detailed status
+- `qnap-docker start/stop/restart` - Control container state
+- `qnap-docker rm` - Remove containers (with force option)
+
+### **Container Operations**
+- `qnap-docker logs` - View container logs (follow, tail, timestamps)
+- `qnap-docker exec` - Execute commands inside containers (interactive/non-interactive)
+- `qnap-docker stats` - Real-time resource usage statistics
+- `qnap-docker inspect` - Detailed container/image/volume information
+
+### **Image Management**
+- `qnap-docker pull` - Pull images from registries (platform-specific, all tags)
+- `qnap-docker images` - List images (all, dangling, with digests)
+- `qnap-docker rmi` - Remove images (force, preserve parents)
+- `qnap-docker import/export` - Backup and restore containers
+
+### **Volume Management**
+- `qnap-docker volume ls` - List volumes with driver information
+- `qnap-docker volume create` - Create volumes with custom drivers/labels
+- `qnap-docker volume rm` - Remove volumes (with force)
+- `qnap-docker volume inspect` - Detailed volume information
+- `qnap-docker volume prune` - Clean unused volumes
+
+### **Network Management**
+- `qnap-docker network ls` - List networks with filtering options
+- `qnap-docker network create` - Create custom networks with CIDR, gateways
+- `qnap-docker network rm` - Remove networks
+- `qnap-docker network inspect` - Detailed network information
+- `qnap-docker network connect/disconnect` - Attach/detach containers
+- `qnap-docker network prune` - Clean unused networks
+
+### **System Operations**
+- `qnap-docker system df` - Show Docker disk usage
+- `qnap-docker system info` - Display Docker system information
+- `qnap-docker system prune` - Clean unused containers, images, networks
+
+### **Multi-Container Applications**
+- `qnap-docker deploy` - Deploy from docker-compose.yml files
+- `qnap-docker init` - Setup connection to QNAP NAS
+
+### **Key Command Examples**
+
+```bash
+# Container lifecycle
+qnap-docker run nginx:latest --name web --port 80:80 --restart unless-stopped
+qnap-docker logs web --follow --timestamps
+qnap-docker exec -it web /bin/bash
+qnap-docker restart web
+qnap-docker stop web && qnap-docker rm web
+
+# Image management
+qnap-docker pull postgres:13 --platform linux/arm64
+qnap-docker images --dangling
+qnap-docker rmi old-image --force
+
+# Volume operations
+qnap-docker volume create my-data --driver local
+qnap-docker volume ls --quiet
+qnap-docker volume inspect my-data
+qnap-docker volume rm my-data --force
+
+# Network operations
+qnap-docker network create my-app-net --driver bridge --subnet 172.20.0.0/16
+qnap-docker network ls --filter driver=bridge
+qnap-docker network connect my-app-net web-server --alias web
+qnap-docker network disconnect my-app-net web-server
+
+# System maintenance
+qnap-docker system df --verbose
+qnap-docker system prune --all --volumes --force
+qnap-docker stats --all --no-stream
 
 # Remove container
 qnap-docker rm web-server

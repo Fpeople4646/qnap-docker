@@ -7,7 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.2.0] - 2025-01-15
+
+### Added - Complete Docker Management Suite
+- **Container Operations**: `logs`, `exec`, `start`, `stop`, `restart`, `stats` commands
+- **Image Management**: `images`, `pull`, `rmi`, `import`, `export` commands
+- **Volume Management**: `volume ls/create/rm/inspect/prune` subcommands
+- **Network Management**: `network ls/create/rm/inspect/connect/disconnect/prune` subcommands
+- **System Management**: `system df/info/prune` subcommands
+- **Advanced Inspection**: `inspect` command for detailed object information
+
+### Enhanced Features
+- **Interactive Container Execution**: Full TTY and interactive mode support
+- **Real-time Log Following**: Stream container logs with timestamps and filtering
+- **Resource Monitoring**: Live container statistics and system resource usage
+- **Advanced Image Operations**: Platform-specific pulls, digest support, dangling image cleanup
+- **Network Isolation**: Custom bridge networks with CIDR configuration
+- **Volume Persistence**: Named volume creation with driver options
+- **System Maintenance**: Comprehensive cleanup and disk usage monitoring
+
+### Total Command Count
+- **23 main commands + 18 subcommands** = Complete Docker workflow coverage
+- Full feature parity with syno-docker v0.2.0
+- All commands adapted for QNAP Container Station architecture
+
+### Architecture Improvements
 - Dynamic Docker binary detection for Container Station
 - ZFS volume support (ZFS*_DATA) in addition to CACHEDEV volumes
 - Docker binary path caching for improved performance

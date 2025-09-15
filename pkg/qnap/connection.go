@@ -263,3 +263,15 @@ func (c *Connection) GetPrimaryVolumePath() string {
 	}
 	return "/share/CACHEDEV1_DATA"
 }
+
+// GetDockerPath returns the cached Docker binary path
+func (c *Connection) GetDockerPath() (string, error) {
+	if c.dockerPath == "" {
+		dockerPath, err := c.findDockerBinary()
+		if err != nil {
+			return "", err
+		}
+		c.dockerPath = dockerPath
+	}
+	return c.dockerPath, nil
+}
