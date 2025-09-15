@@ -56,7 +56,7 @@ brews:
   - name: qnap-docker
     repository:
       owner: scttfrdmn
-      name: homebrew-tap
+      name: homebrew-qnap-docker
     homepage: https://github.com/scttfrdmn/qnap-docker
     description: "CLI tool for deploying Docker containers to QNAP NAS devices with Container Station"
     license: MIT
