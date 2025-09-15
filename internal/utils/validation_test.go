@@ -237,8 +237,8 @@ func TestValidateQNAPPath(t *testing.T) {
 		{"/share/CACHEDEV1_DATA/docker", false},
 		{"/share/CACHEDEV2_DATA/data", false},
 		{"/share/CACHEDEV3_DATA/backup", false},
-		{"/share/ZFS530_DATA/docker", false},         // ZFS volume support
-		{"/share/ZFS1_DATA/data", false},             // ZFS volume support
+		{"/share/ZFS530_DATA/docker", false}, // ZFS volume support
+		{"/share/ZFS1_DATA/data", false},     // ZFS volume support
 		{"/share/USB/backup", false},
 		{"/share/external/storage", false},
 		{"", true},

@@ -128,10 +128,35 @@ func TestDirectDockerCommands(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
+	// Use environment variables for configuration
+	nasHost := os.Getenv("QNAP_HOST")
+	if nasHost == "" {
+		nasHost = "astrapi.local" // fallback for local testing
+	}
+	nasUser := os.Getenv("QNAP_USER")
+	if nasUser == "" {
+		nasUser = "admin" // default user
+	}
+	sshTarget := fmt.Sprintf("%s@%s", nasUser, nasHost)
+
+	// Find Docker binary once for all tests
+	var dockerPath string
+	t.Run("FindDockerBinary", func(t *testing.T) {
+		findCmd := exec.Command("ssh", sshTarget, "find /share -name docker -type f 2>/dev/null | grep container-station | head -1")
+		findOutput, err := findCmd.CombinedOutput()
+		if err != nil || strings.TrimSpace(string(findOutput)) == "" {
+			t.Fatalf("Container Station docker binary not found: %v\nOutput: %s", err, findOutput)
+		}
+		dockerPath = strings.TrimSpace(string(findOutput))
+		t.Logf("Found Docker binary at: %s", dockerPath)
+	})
+
 	// Test Docker info command
 	t.Run("DockerInfo", func(t *testing.T) {
-		cmd := exec.Command("ssh", "scttfrdmn@astrapi.local",
-			"/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker info --format '{{.ServerVersion}}'")
+		if dockerPath == "" {
+			t.Skip("Docker binary not found")
+		}
+		cmd := exec.Command("ssh", sshTarget, fmt.Sprintf("%s info --format '{{.ServerVersion}}'", dockerPath))
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("Docker info failed: %v\nOutput: %s", err, output)
@@ -147,8 +172,10 @@ func TestDirectDockerCommands(t *testing.T) {
 
 	// Test image pulling (using a small image)
 	t.Run("ImagePull", func(t *testing.T) {
-		cmd := exec.Command("ssh", "scttfrdmn@astrapi.local",
-			"/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker pull hello-world:latest")
+		if dockerPath == "" {
+			t.Skip("Docker binary not found")
+		}
+		cmd := exec.Command("ssh", sshTarget, fmt.Sprintf("%s pull hello-world:latest", dockerPath))
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("Docker pull failed: %v\nOutput: %s", err, output)
@@ -163,16 +190,17 @@ func TestDirectDockerCommands(t *testing.T) {
 
 	// Test container run (quick test)
 	t.Run("ContainerRun", func(t *testing.T) {
+		if dockerPath == "" {
+			t.Skip("Docker binary not found")
+		}
 		containerName := fmt.Sprintf("qnap-docker-test-%d", os.Getpid())
 
 		// Cleanup any existing container with same name
-		cleanupCmd := exec.Command("ssh", "scttfrdmn@astrapi.local",
-			fmt.Sprintf("/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm -f %s 2>/dev/null || true", containerName))
+		cleanupCmd := exec.Command("ssh", sshTarget, fmt.Sprintf("%s rm -f %s 2>/dev/null || true", dockerPath, containerName))
 		cleanupCmd.Run()
 
 		// Run hello-world container
-		cmd := exec.Command("ssh", "scttfrdmn@astrapi.local",
-			fmt.Sprintf("/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker run --name %s hello-world:latest", containerName))
+		cmd := exec.Command("ssh", sshTarget, fmt.Sprintf("%s run --name %s hello-world:latest", dockerPath, containerName))
 		output, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Fatalf("Docker run failed: %v\nOutput: %s", err, output)
@@ -183,35 +211,31 @@ func TestDirectDockerCommands(t *testing.T) {
 		}
 
 		// Cleanup
-		cleanupCmd = exec.Command("ssh", "scttfrdmn@astrapi.local",
-			fmt.Sprintf("/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker rm -f %s", containerName))
+		cleanupCmd = exec.Command("ssh", sshTarget, fmt.Sprintf("%s rm -f %s", dockerPath, containerName))
 		cleanupCmd.Run()
 
 		t.Logf("✅ Docker container run/remove successful")
 	})
 
-	// Test CACHEDEV path validation
-	t.Run("CacheDevPathValidation", func(t *testing.T) {
-		// Test multiple potential CACHEDEV paths
-		potentialPaths := []string{
-			"/share/CACHEDEV1_DATA",
-			"/share/CACHEDEV2_DATA",
-			"/share/CACHEDEV3_DATA",
+	// Test volume path validation
+	t.Run("VolumePathValidation", func(t *testing.T) {
+		// Test multiple potential volume paths
+		cmd := exec.Command("ssh", sshTarget, "ls -d /share/CACHEDEV*_DATA /share/ZFS*_DATA 2>/dev/null || echo 'No volumes found'")
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("Failed to detect volumes: %v\nOutput: %s", err, output)
 		}
 
-		foundPaths := []string{}
-		for _, path := range potentialPaths {
-			cmd := exec.Command("ssh", "scttfrdmn@astrapi.local", fmt.Sprintf("test -d %s && echo 'EXISTS' || echo 'NOT_FOUND'", path))
-			output, err := cmd.CombinedOutput()
-			if err == nil && strings.Contains(string(output), "EXISTS") {
-				foundPaths = append(foundPaths, path)
-			}
+		result := strings.TrimSpace(string(output))
+		if strings.Contains(result, "No volumes found") {
+			t.Fatalf("No volume paths found on QNAP NAS")
 		}
 
+		foundPaths := strings.Fields(result)
 		if len(foundPaths) == 0 {
-			t.Fatalf("No CACHEDEV paths found on QNAP NAS")
+			t.Fatalf("No volume paths found on QNAP NAS")
 		}
 
-		t.Logf("✅ Found CACHEDEV paths: %v", foundPaths)
+		t.Logf("✅ Found volume paths: %v", foundPaths)
 	})
 }

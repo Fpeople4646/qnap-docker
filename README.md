@@ -263,18 +263,26 @@ qnap-docker includes comprehensive integration tests that validate functionality
 # Test connection to your NAS
 NAS_HOST=your-qnap.local make integration-test
 
+# With custom user
+NAS_HOST=your-qnap.local NAS_USER=your-username make integration-test
+
 # Full end-to-end testing with coverage
 NAS_HOST=your-qnap.local NAS_USER=admin make integration-test-full
+
+# Test with environment variables (alternative)
+QNAP_HOST=your-qnap.local QNAP_USER=admin go test ./tests/integration/ -v -short=false
 ```
 
 **Integration test coverage:**
 - ✅ SSH connectivity and authentication (ssh-agent + key file)
-- ✅ Container Station Docker command execution over SSH
+- ✅ Dynamic Container Station Docker binary detection
 - ✅ Container deployment, lifecycle, and removal
 - ✅ HTTP endpoint validation for deployed services
-- ✅ Volume mounting and file system access
+- ✅ Volume mounting and file system access (CACHEDEV + ZFS)
 - ✅ Error handling for invalid configurations
-- ✅ CACHEDEV volume detection and validation
+- ✅ Multi-volume detection (CACHEDEV, ZFS) and validation
+- ✅ Docker version compatibility testing
+- ✅ CLI command interface validation
 
 ### Quality Checks
 
