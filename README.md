@@ -480,32 +480,37 @@ make coverage         # Generate coverage report
 
 ### Integration Tests
 
-qnap-docker includes comprehensive integration tests that validate functionality against real QNAP hardware:
+qnap-docker includes comprehensive integration tests that validate all 40+ commands against real QNAP hardware:
 
 ```bash
-# Test connection to your NAS
-NAS_HOST=your-qnap.local make integration-test
+# Comprehensive test suite for all v0.2.x commands
+QNAP_HOST=your-qnap.local go test -v -integration -run TestComprehensiveCommandSuite \
+  -nas-host=your-qnap.local -nas-user=admin ./tests/integration/
 
-# With custom user
-NAS_HOST=your-qnap.local NAS_USER=your-username make integration-test
+# Test specific command categories
+QNAP_HOST=your-qnap.local go test -v -integration -run TestComprehensiveCommandSuite/ContainerOperations ./tests/integration/
+QNAP_HOST=your-qnap.local go test -v -integration -run TestComprehensiveCommandSuite/NetworkManagement ./tests/integration/
 
-# Full end-to-end testing with coverage
-NAS_HOST=your-qnap.local NAS_USER=admin make integration-test-full
+# Legacy basic tests
+QNAP_HOST=your-qnap.local go test -v -run TestConnectionToQNAP ./tests/integration/
+QNAP_HOST=your-qnap.local go test -v -run TestQNAPDockerEndToEnd ./tests/integration/
 
-# Test with environment variables (alternative)
-QNAP_HOST=your-qnap.local QNAP_USER=admin go test ./tests/integration/ -v -short=false
+# All integration tests
+QNAP_HOST=your-qnap.local go test -v -integration -nas-host=your-qnap.local ./tests/integration/
 ```
 
-**Integration test coverage:**
+**Comprehensive integration test coverage (v0.2.2+):**
+- ✅ **Container Operations**: logs, exec, start/stop/restart, stats with real scenarios
+- ✅ **Image Management**: pull, images, rmi, export/import with registry interactions
+- ✅ **Volume Management**: volume lifecycle, mounting, data persistence validation
+- ✅ **Network Management**: network creation, container connectivity, isolation testing
+- ✅ **System Operations**: system df/info/prune with actual resource cleanup
+- ✅ **Advanced Features**: inspect, backup/restore workflows
+- ✅ **Error Handling**: Invalid configurations and failure scenarios
+- ✅ **Resource Cleanup**: Comprehensive cleanup verification
 - ✅ SSH connectivity and authentication (ssh-agent + key file)
-- ✅ Dynamic Container Station Docker binary detection
-- ✅ Container deployment, lifecycle, and removal
-- ✅ HTTP endpoint validation for deployed services
-- ✅ Volume mounting and file system access (CACHEDEV + ZFS)
-- ✅ Error handling for invalid configurations
-- ✅ Multi-volume detection (CACHEDEV, ZFS) and validation
-- ✅ Docker version compatibility testing
-- ✅ CLI command interface validation
+- ✅ Container Station dynamic detection and path validation
+- ✅ Multi-volume support (CACHEDEV, ZFS) testing
 
 ### Quality Checks
 

@@ -198,7 +198,7 @@ func (c *Connection) findDockerBinary() (string, error) {
 		return DockerBinary, nil
 	}
 
-	// Search for Container Station Docker binary
+	// Search for Container Station Docker binary with better error handling
 	output, err := c.ExecuteCommand("find /share -name docker -type f 2>/dev/null | grep container-station | head -1")
 	if err != nil {
 		return "", fmt.Errorf("failed to search for docker binary: %w", err)
@@ -206,6 +206,20 @@ func (c *Connection) findDockerBinary() (string, error) {
 
 	dockerPath := strings.TrimSpace(output)
 	if dockerPath == "" {
+		// Try more specific paths if general search fails
+		commonPaths := []string{
+			"/share/CACHEDEV1_DATA/.qpkg/container-station/bin/docker",
+			"/share/ZFS530_DATA/.qpkg/container-station/usr/bin/.libs/docker",
+			"/share/CACHEDEV2_DATA/.qpkg/container-station/bin/docker",
+			"/share/ZFS1_DATA/.qpkg/container-station/usr/bin/.libs/docker",
+		}
+
+		for _, path := range commonPaths {
+			if _, err := c.ExecuteCommand(fmt.Sprintf("test -f %s", path)); err == nil {
+				return path, nil
+			}
+		}
+
 		return "", fmt.Errorf("no Container Station docker binary found")
 	}
 
